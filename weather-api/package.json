@@ -1,0 +1,17 @@
+{
+  "name": "weather-api",
+  "version": "1.0.0",
+  "description": "API de Clima con Clean Architecture, patrón Adaptador y caché Cache-Aside",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc && node dist/index.js"
+  },
+  "keywords": ["weather", "api", "clean-architecture", "typescript"],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  }
+}

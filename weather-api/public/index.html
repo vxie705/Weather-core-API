@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌤️ API - Clima en Vivo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #0c1a2b 0%, #1a3a5c 50%, #0d2137 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #e0e0e0;
+      padding: 20px;
+    }
+    .container {
+      background: rgba(15, 32, 50, 0.85);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 24px;
+      padding: 40px 36px;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+      text-align: center;
+    }
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #ffffff;
+    }
+    .subtitle {
+      font-size: 0.85rem;
+      color: #8899aa;
+      margin-bottom: 24px;
+    }
+    .search-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+    .search-box input {
+      flex: 1;
+      padding: 12px 18px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.06);
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+      transition: border 0.2s;
+    }
+    .search-box input:focus { border-color: #4da3ff; }
+    .search-box input::placeholder { color: #5a7a95; }
+    .search-box button {
+      padding: 12px 22px;
+      border-radius: 14px;
+      border: none;
+      background: #2979ff;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .search-box button:hover { background: #1c68e0; }
+    .search-box button:active { transform: scale(0.96); }
+    .weather-card {
+      background: rgba(255,255,255,0.04);
+      border-radius: 20px;
+      padding: 28px 24px;
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+    .weather-card.show { display: block; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .city-name {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .country {
+      font-size: 0.9rem;
+      color: #8899aa;
+      margin-bottom: 8px;
+    }
+    .temp-main {
+      font-size: 4.5rem;
+      font-weight: 300;
+      color: #fff;
+      line-height: 1;
+      margin: 10px 0 4px;
+    }
+    .temp-unit { font-size: 1.8rem; color: #8899aa; }
+    .description {
+      font-size: 1.1rem;
+      color: #b0c4d8;
+      text-transform: capitalize;
+      margin-bottom: 20px;
+    }
+    .details-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      text-align: left;
+    }
+    .detail-item {
+      background: rgba(255,255,255,0.04);
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+    .detail-label {
+      font-size: 0.75rem;
+      color: #667a8f;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .detail-value {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #d0dce8;
+    }
+    .detail-unit {
+      font-size: 0.8rem;
+      color: #667a8f;
+      font-weight: 400;
+    }
+    .error-msg {
+      color: #ff6b6b;
+      background: rgba(255,107,107,0.1);
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: 12px;
+      display: none;
+      font-size: 0.9rem;
+    }
+    .error-msg.show { display: block; }
+    .loading {
+      display: none;
+      margin: 20px 0;
+    }
+    .loading.show { display: block; }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: #2979ff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .coords { font-size: 0.78rem; color: #5a7a95; margin-top: 14px; }
+    .icon-weather { font-size: 3.5rem; margin-bottom: 8px; }
+    .mock-badge {
+      display: inline-block;
+      background: #ff9800;
+      color: #000;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🌤️ API - Clima en Vivo</h1>
+    <p class="subtitle">Consulta el clima de cualquier ciudad</p>
+
+    <div class="search-box">
+      <input type="text" id="cityInput" placeholder="Ej: Lima, Madrid, Tokyo..." value="Lima" autofocus>
+      <button onclick="buscarClima()">Buscar</button>
+    </div>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+    </div>
+
+    <div class="error-msg" id="errorMsg"></div>
+
+    <div class="weather-card" id="weatherCard">
+      <div class="icon-weather" id="weatherIcon">☁️</div>
+      <div class="city-name">
+        <span id="cityName">-</span>
+        <span class="mock-badge" id="mockBadge" style="display:none">MOCK</span>
+      </div>
+      <div class="country" id="country">-</div>
+      <div class="temp-main">
+        <span id="temperature">-</span><span class="temp-unit">°C</span>
+      </div>
+      <div class="description" id="description">-</div>
+
+      <div class="details-grid">
+        <div class="detail-item">
+          <div class="detail-label">Sensación térmica</div>
+          <div class="detail-value"><span id="feelsLike">-</span> <span class="detail-unit">°C</span></div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Humedad</div>
+          <div class="detail-value"><span id="humidity">-</span> <span class="detail-unit">%</span></div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Presión</div>
+          <div class="detail-value"><span id="pressure">-</span> <span class="detail-unit">hPa</span></div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Viento</div>
+          <div class="detail-value"><span id="windSpeed">-</span> <span class="detail-unit">m/s</span></div>
+        </div>
+      </div>
+      <div class="coords">
+        📍 Lat: <span id="lat">-</span> | Lon: <span id="lon">-</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:3000';
+
+    async function buscarClima() {
+      const city = document.getElementById('cityInput').value.trim();
+      if (!city) return;
+
+      document.getElementById('loading').classList.add('show');
+      document.getElementById('weatherCard').classList.remove('show');
+      document.getElementById('errorMsg').classList.remove('show');
+
+      try {
+        const response = await fetch(`${API_BASE}/weather?city=${encodeURIComponent(city)}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          document.getElementById('errorMsg').textContent = data.error || 'Error al obtener el clima';
+          document.getElementById('errorMsg').classList.add('show');
+        } else {
+          mostrarClima(data);
+        }
+      } catch (err) {
+        document.getElementById('errorMsg').textContent = 'No se pudo conectar con la API. Asegúrate de que el servidor esté corriendo en ' + API_BASE;
+        document.getElementById('errorMsg').classList.add('show');
+      } finally {
+        document.getElementById('loading').classList.remove('show');
+      }
+    }
+
+    function mostrarClima(data) {
+      const { location, conditions } = data;
+
+      document.getElementById('cityName').textContent = location.city;
+      document.getElementById('country').textContent = location.country;
+      document.getElementById('temperature').textContent = Math.round(conditions.temperature);
+      document.getElementById('feelsLike').textContent = Math.round(conditions.feelsLike);
+      document.getElementById('humidity').textContent = conditions.humidity;
+      document.getElementById('pressure').textContent = conditions.pressure;
+      document.getElementById('windSpeed').textContent = conditions.windSpeed;
+      document.getElementById('description').textContent = conditions.description;
+      document.getElementById('lat').textContent = location.lat;
+      document.getElementById('lon').textContent = location.lon;
+
+      // Icono según código
+      const iconMap = {
+        '01d': '☀️', '01n': '🌙',
+        '02d': '⛅', '02n': '☁️',
+        '03d': '☁️', '03n': '☁️',
+        '04d': '☁️', '04n': '☁️',
+        '09d': '🌧️', '09n': '🌧️',
+        '10d': '🌦️', '10n': '🌧️',
+        '11d': '⛈️', '11n': '⛈️',
+        '13d': '🌨️', '13n': '🌨️',
+        '50d': '🌫️', '50n': '🌫️',
+      };
+      document.getElementById('weatherIcon').textContent = iconMap[conditions.iconCode] || '🌡️';
+
+      // Badge mock
+      const isMock = conditions.description.includes('mock');
+      document.getElementById('mockBadge').style.display = isMock ? 'inline-block' : 'none';
+
+      document.getElementById('weatherCard').classList.add('show');
+    }
+
+    // Cargar Lima al iniciar
+    buscarClima();
+
+    // Permitir buscar con Enter
+    document.getElementById('cityInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') buscarClima();
+    });
+  </script>
+</body>
+</html>
